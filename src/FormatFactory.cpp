@@ -22,6 +22,7 @@
 #include "chemfiles/formats/CSSR.hpp"
 #include "chemfiles/formats/GRO.hpp"
 #include "chemfiles/formats/MOL2.hpp"
+#include "chemfiles/formats/SMI.hpp"
 
 using namespace chemfiles;
 
@@ -49,6 +50,7 @@ FormatFactory::FormatFactory() {
     this->add_format<GROFormat>();
     this->add_format<MOL2Format>();
     this->add_format<MMTFFormat>();
+    this->add_format<SMIFormat>();
 
     // VMD molfile plugins
     this->add_format<Molfile<DCD>>();

@@ -57,7 +57,7 @@ TEST_CASE("Read files in SMI format") {
 
     SECTION("Read entire file") {
         Trajectory file("data/smi/rdkit_problems.smi");
-        //CHECK(file.nsteps() == 70);
+        CHECK(file.nsteps() == 70);
 
         Frame frame;
         while (!file.done()) {
@@ -129,4 +129,43 @@ TEST_CASE("Check parsing results") {
         CHECK((bonds[5][0] == 3 && bonds[5][1] == 4));
 
     }
+}
+
+TEST_CASE("Write SMI File") {
+    auto tmpfile = NamedTempPath(".smi");
+    const auto EXPECTED_CONTENT =
+    "C\n"
+    "CN\n"
+    "CN(P)O\n"
+    "CN(P(F)B)O\n"
+    ;
+
+    Frame frame;
+    frame.add_atom(Atom("C"), {0, 0, 0});
+
+    auto file = Trajectory(tmpfile, 'w');
+    file.write(frame);
+
+    frame.add_atom(Atom("N"), {0, 0, 0});
+    frame.add_bond(0, 1);
+    file.write(frame);
+
+    frame.add_atom(Atom("P"), {0, 0, 0});
+    frame.add_atom(Atom("O"), {0, 0, 0});
+    frame.add_bond(1, 2);
+    frame.add_bond(1, 3);
+    file.write(frame);
+
+    frame.add_atom(Atom("F"), {0, 0, 0});
+    frame.add_atom(Atom("B"), {0, 0, 0});
+    frame.add_bond(2, 4);
+    frame.add_bond(2, 5);
+    file.write(frame);
+    
+
+    file.close();
+    std::ifstream checking(tmpfile);
+    std::string content((std::istreambuf_iterator<char>(checking)),
+                         std::istreambuf_iterator<char>());
+    CHECK(content == EXPECTED_CONTENT);
 }

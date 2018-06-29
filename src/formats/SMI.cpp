@@ -5,6 +5,7 @@
 #include <sstream>
 #include <list>
 #include <map>
+#include <stack>
 
 #include <fmt/format.h>
 #include <fmt/ostream.h>
@@ -38,6 +39,8 @@ template<> FormatInfo chemfiles::format_information<SMIFormat>() {
 /// Fast-forward the file for one step, returning `false` if the file does
 /// not contain one more step.
 static bool forward(TextFile& file);
+/// See if all values in array are true
+static bool all(const std::vector<bool>& vec);
 
 SMIFormat::SMIFormat(const std::string& path, File::Mode mode)
     : file_(TextFile::create(path, mode))
@@ -65,7 +68,6 @@ void SMIFormat::read_step(const size_t step, Frame& frame) {
 }
 
 void SMIFormat::read(Frame& frame) {
-
     Topology topol;
     size_t active_atom;
     std::vector<Residue> molVect;
@@ -104,6 +106,60 @@ void SMIFormat::read(Frame& frame) {
 }
 
 void SMIFormat::write(const Frame& frame) {
+    // Create a bond map as working with this is easier
+    std::vector<std::vector<size_t>> bonds(frame.size());
+    for (auto& bond : frame.topology().bonds()) {
+        bonds[bond[0]].push_back(bond[1]);
+        bonds[bond[1]].push_back(bond[0]);
+    }
+
+    //TODO: Use residues
+    //TODO: Implement a connonical smiles write, this one will do weird things
+    std::vector<bool> written(frame.size(), false);
+    size_t next_atom = 0;
+    std::stack<size_t> branch_points;
+    //std::queue<size_t> rings;
+
+    while (!all(written)) {
+        const auto& current_bonds = bonds[next_atom];
+
+        fmt::print(*file_, frame[next_atom].type());
+        written[next_atom] = true;
+
+        if (current_bonds.size() == 0) {
+            break;
+        } else if (current_bonds.size() == 1) { //End of a branch point
+            if (written[current_bonds[0]]) { // We are done with a branch
+                if (branch_points.size()) {
+                    next_atom = branch_points.top();
+                    branch_points.pop();
+                    fmt::print(*file_, ")");
+                } else {
+                    break;
+                }
+            } else {
+                next_atom = current_bonds[0];
+            }
+        } else if (current_bonds.size() == 2 && next_atom == 0) {
+            branch_points.push(current_bonds[1]);
+            next_atom = current_bonds[0];
+        } else {
+            fmt::print(*file_, "(");
+            bool selected = false;
+            for (const auto& neighbor : current_bonds) {
+                if (!written[neighbor]) {
+                    if (!selected) {
+                        selected = true;
+                        next_atom = neighbor;
+                    } else {
+                        branch_points.push(neighbor);
+                    }
+                }
+            }
+        }
+    }
+
+    fmt::print(*file_, "\n");
 }
 
 bool forward(TextFile& file) {
@@ -116,5 +172,15 @@ bool forward(TextFile& file) {
         return false;
     }
     
+    return true;
+}
+
+bool all(const std::vector<bool>& vec) {
+    for (auto i : vec) {
+        if (!i) {
+            return false;
+        }
+    }
+
     return true;
 }

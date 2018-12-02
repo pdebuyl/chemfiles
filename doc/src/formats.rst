@@ -75,7 +75,7 @@ correspond to LAMMPS data files, as read by the LAMMPS
 .. _TRJ: http://manual.gromacs.org/current/online/trj.html
 .. _TRR: http://manual.gromacs.org/current/online/trr.html
 .. _Tinker: http://chembytes.wikidot.com/tnk-tut00#toc2
-.. _XTC: http://manual.gromacs.org/current/online/xtc.html
+.. _XTC: http://manual.gromacs.org/documentation/current/user-guide/file-formats.html#xtc
 .. _XYZ: https://openbabel.org/wiki/XYZ
 
 .. |yes| image:: static/img/yes.png
